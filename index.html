@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Complete the Dialogue</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #fffaf0;
+      text-align: center;
+      padding: 20px;
+    }
+    .question-box {
+      font-size: 24px;
+      margin-bottom: 20px;
+    }
+    .options {
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 20px;
+    }
+    .option {
+      background-color: #e0e0e0;
+      padding: 10px 20px;
+      border-radius: 12px;
+      cursor: pointer;
+      font-size: 18px;
+      border: 2px solid transparent;
+      transition: 0.3s;
+    }
+    .option:hover {
+      border-color: #666;
+    }
+    .correct {
+      background-color: #c8f7c5 !important;
+    }
+    .incorrect {
+      background-color: #f7c5c5 !important;
+    }
+    #startScreen, #endScreen {
+      margin-top: 50px;
+    }
+    #confettiCanvas {
+      position: fixed;
+      top: 0;
+      left: 0;
+      pointer-events: none;
+      z-index: 10;
+    }
+  </style>
+</head>
+<body>
+
+<canvas id="confettiCanvas"></canvas>
+
+<div id="startScreen">
+  <h2>Complete the Dialogue</h2>
+  <p>Select the correct word to complete each greeting. Only one answer is correct!</p>
+  <button onclick="startGame()">Start - Iniciar</button>
+</div>
+
+<div id="gameContainer" style="display:none;">
+  <div class="question-box" id="question"></div>
+  <div class="options" id="options"></div>
+  <div style="margin-top: 20px;">
+    ✅ <span id="scoreGood">0</span> &nbsp;&nbsp;&nbsp;
+    ❌ <span id="scoreBad">0</span>
+  </div>
+</div>
+
+<div id="endScreen" style="display:none;">
+  <h2 id="finalMessage"></h2>
+  <p>✅ Correct: <span id="finalGood"></span> | ❌ Incorrect: <span id="finalBad"></span></p>
+  <button onclick="startGame()">🔁 Restart</button>
+</div>
+
+<script>
+  const questions = [
+    { prefix: "Hasta", options: ["Gracias", "chao", "luego", "hola"], answer: "luego" },
+    { prefix: "Buenos", options: ["siento", "días", "bien", "mañána"], answer: "días" },
+    { prefix: "Lo", options: ["mañana", "mucho", "bien", "siento"], answer: "siento" },
+    { prefix: "Mucho", options: ["gusto", "bien", "gracias", "hola"], answer: "gusto" },
+    { prefix: "¿Cómo", options: ["tarde?", "mucho?.", "estas?", "dias?"], answer: "estas?" },
+    { prefix: "¿Cómo te", options: ["gusto", "llamas?", "luego?", "bien"], answer: "llamas?" },
+    { prefix: "Mas", options: ["o menos", "bien", "hola", "chao"], answer: "o menos" },
+    { prefix: "Gracias", options: ["!", ".", "?", ","], answer: "!" },
+    { prefix: "Estoy", options: ["mucho", "mal", "gracias", "igualmente"], answer: "mal" },
+    { prefix: "Hasta", options: ["que tal", "tambien", "mañana", "gracias"], answer: "mañana" },
+    { prefix: "¿Que", options: ["tal?", "llama?", "como?", "subo"], answer: "tal?" },
+    { prefix: "Buenas", options: ["hola", "mañana", "gusto", "noches"], answer: "noches" }
+  ];
+
+  let currentIndex = 0;
+  let good = 0;
+  let bad = 0;
+
+  function startGame() {
+    currentIndex = 0;
+    good = 0;
+    bad = 0;
+    document.getElementById("scoreGood").textContent = "0";
+    document.getElementById("scoreBad").textContent = "0";
+    document.getElementById("startScreen").style.display = "none";
+    document.getElementById("endScreen").style.display = "none";
+    document.getElementById("gameContainer").style.display = "block";
+    showQuestion();
+  }
+
+  function showQuestion() {
+    if (currentIndex >= questions.length) {
+      finishGame();
+      return;
+    }
+
+    const q = questions[currentIndex];
+    document.getElementById("question").textContent = `${q.prefix} ...`;
+    const optionsDiv = document.getElementById("options");
+    optionsDiv.innerHTML = "";
+
+    q.options.forEach(option => {
+      const btn = document.createElement("div");
+      btn.className = "option";
+      btn.textContent = option;
+      btn.onclick = () => checkAnswer(btn, option, q.answer);
+      optionsDiv.appendChild(btn);
+    });
+  }
+
+  function checkAnswer(btn, selected, correct) {
+    if (selected === correct) {
+      btn.classList.add("correct");
+      good++;
+      document.getElementById("scoreGood").textContent = good;
+    } else {
+      btn.classList.add("incorrect");
+      bad++;
+      document.getElementById("scoreBad").textContent = bad;
+    }
+
+    Array.from(document.getElementsByClassName("option")).forEach(b => {
+      b.onclick = null;
+    });
+
+    setTimeout(() => {
+      currentIndex++;
+      showQuestion();
+    }, 800);
+  }
+
+  function finishGame() {
+    document.getElementById("gameContainer").style.display = "none";
+    document.getElementById("endScreen").style.display = "block";
+    document.getElementById("finalGood").textContent = good;
+    document.getElementById("finalBad").textContent = bad;
+
+    let message = "";
+    if (good <= 6) {
+      message = "You failed, try again.";
+    } else if (good <= 9) {
+      message = "You passed, but you can do better!";
+    } else {
+      message = "Congratulations! Great job!";
+      launchConfetti();
+    }
+    document.getElementById("finalMessage").textContent = message;
+  }
+
+  function launchConfetti() {
+    const canvas = document.getElementById("confettiCanvas");
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    const ctx = canvas.getContext("2d");
+    const pieces = Array.from({ length: 150 }, () => ({
+      x: Math.random() * canvas.width,
+      y: Math.random() * canvas.height - canvas.height,
+      size: Math.random() * 8 + 4,
+      speed: Math.random() * 3 + 2,
+      color: `hsl(${Math.random() * 360}, 100%, 60%)`
+    }));
+    function draw() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      for (const p of pieces) {
+        ctx.fillStyle = p.color;
+        ctx.fillRect(p.x, p.y, p.size, p.size);
+        p.y += p.speed;
+        if (p.y > canvas.height) {
+          p.y = -10;
+          p.x = Math.random() * canvas.width;
+        }
+      }
+      requestAnimationFrame(draw);
+    }
+    draw();
+  }
+</script>
+</body>
+</html>
